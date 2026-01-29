@@ -1,0 +1,65 @@
+# .github/workflows/daily-2026.yml
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1-5'  # Run Monday-Friday at 9 AM UTC
+
+jobs:
+  daily-commits:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Check if today already has commits
+      id: check-commits
+      run: |
+        TODAY=$(date +%Y-%m-%d)
+        echo "Checking for commits on $TODAY"
+        
+        # Count commits for today
+        COMMIT_COUNT=$(git log --since="$TODAY 00:00:00" --until="$TODAY 23:59:59" --author="${{ env.GIT_EMAIL }}" --oneline | wc -l)
+        echo "commit-count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+        
+        if [ $COMMIT_COUNT -gt 0 ]; then
+          echo "Found $COMMIT_COUNT commits for today. Skipping."
+          echo "skip=true" >> $GITHUB_OUTPUT
+        else
+          echo "No commits found for today. Proceeding."
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GIT_EMAIL: emmanuelcuyugan@gmail.com
+    
+    - name: Create daily commits
+      if: steps.check-commits.outputs.skip == 'false'
+      uses: bcanseco/github-contribution-graph-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_EMAIL: emmanuelcuyugan@gmail.com
+        MAX_DAYS: 1  # Only today
+        MIN_COMMITS_PER_DAY: 1
+        MAX_COMMITS_PER_DAY: 5
+        INCLUDE_WEEKENDS: false
+        INCLUDE_WEEKDAYS: true
+        GIT_COMMIT_MESSAGE: "chore: daily contribution $(date +%Y-%m-%d)"
+    
+    - name: Verify today's commits
+      if: steps.check-commits.outputs.skip == 'false'
+      run: |
+        TODAY=$(date +%Y-%m-%d)
+        echo "Checking commits for $TODAY"
+        git log --since="$TODAY 00:00:00" --until="$TODAY 23:59:59" --author="${{ env.GIT_EMAIL }}" --oneline
+        echo "Daily commits completed successfully!"
+      env:
+        GIT_EMAIL: emmanuelcuyugan@gmail.com
+    
+    - name: Skip notification
+      if: steps.check-commits.outputs.skip == 'true'
+      run: |
+        echo "Skipping commit creation - today already has commits"
