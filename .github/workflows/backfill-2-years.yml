@@ -1,0 +1,39 @@
+# .github/workflows/backfill-2-years.yml
+# One-time backfill: Feb 8, 2024 to Feb 8, 2026 (2 years of weekdays)
+# Trigger manually via workflow_dispatch
+
+name: Backfill 2 Years (2024-2026)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  backfill-weekdays:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Backfill weekday commits (2024-2026)
+      uses: bcanseco/github-contribution-graph-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_EMAIL: emmanuelcuyugan@gmail.com
+        MAX_DAYS: 730  # 2 years (365 * 2)
+        MIN_COMMITS_PER_DAY: 1
+        MAX_COMMITS_PER_DAY: 5
+        INCLUDE_WEEKENDS: false  # Only weekdays
+        INCLUDE_WEEKDAYS: true
+        GIT_COMMIT_MESSAGE: "chore: automated contribution"
+
+    - name: Verify backfill
+      run: |
+        echo "Checking commits from the last 730 days..."
+        git log --oneline --since="730 days ago" | head -20
+        TOTAL_COMMITS=$(git log --oneline --since="730 days ago" --author="emmanuelcuyugan@gmail.com" | wc -l)
+        echo "Total commits created: $TOTAL_COMMITS"
+        echo "Backfill completed successfully!"
