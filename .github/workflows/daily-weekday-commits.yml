@@ -1,12 +1,12 @@
 # .github/workflows/daily-weekday-commits.yml
-# Daily automation: 1-3 commits on weekdays
+# Daily automation: 1-2 commits on weekdays
 
 name: Daily Weekday Commits
 
 on:
   workflow_dispatch:  # Manual trigger
   schedule:
-    - cron: '0 9 * * 1-5'  # Run Monday-Friday at 9 AM UTC
+    - cron: '0 9 * * 1-5'  # Monday-Friday at 9 AM UTC
 
 jobs:
   daily-commits:
@@ -37,7 +37,7 @@ jobs:
           echo "skip=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Create daily commits (1-3)
+    - name: Create daily commits (1-2)
       if: steps.check-commits.outputs.skip == 'false'
       uses: bcanseco/github-contribution-graph-action@v2
       env:
@@ -45,7 +45,7 @@ jobs:
         GIT_EMAIL: emmanuelcuyugan@gmail.com
         MAX_DAYS: 1  # Only today
         MIN_COMMITS_PER_DAY: 1
-        MAX_COMMITS_PER_DAY: 3  # 1-3 commits per day
+        MAX_COMMITS_PER_DAY: 2
         INCLUDE_WEEKENDS: false
         INCLUDE_WEEKDAYS: true
         GIT_COMMIT_MESSAGE: "chore: daily contribution"

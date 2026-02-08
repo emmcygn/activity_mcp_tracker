@@ -1,8 +1,8 @@
 # .github/workflows/backfill-2-years.yml
-# One-time backfill: Feb 8, 2024 to Feb 8, 2026 (2 years of weekdays)
+# One-time backfill: Jan 1, 2024 to Feb 8, 2026
 # Trigger manually via workflow_dispatch
 
-name: Backfill 2 Years (2024-2026)
+name: Backfill Jan 2024 - Feb 2026
 
 on:
   workflow_dispatch:  # Manual trigger only
@@ -18,22 +18,45 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Backfill weekday commits (2024-2026)
+    - name: Calculate days since Jan 1, 2024
+      id: calculate
+      run: |
+        START_DATE="2024-01-01"
+        TODAY=$(date +%Y-%m-%d)
+
+        # Calculate days between start date and today
+        START_EPOCH=$(date -d "$START_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%d" "$START_DATE" +%s)
+        TODAY_EPOCH=$(date -d "$TODAY" +%s 2>/dev/null || date +%s)
+        DAYS_DIFF=$(( ($TODAY_EPOCH - $START_EPOCH) / 86400 ))
+
+        echo "Start date: $START_DATE"
+        echo "Today: $TODAY"
+        echo "Days to backfill: $DAYS_DIFF"
+        echo "days=$DAYS_DIFF" >> $GITHUB_OUTPUT
+
+    - name: Backfill weekday commits (Jan 1, 2024 onwards)
       uses: bcanseco/github-contribution-graph-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GIT_EMAIL: emmanuelcuyugan@gmail.com
-        MAX_DAYS: 730  # 2 years (365 * 2)
+        MAX_DAYS: ${{ steps.calculate.outputs.days }}
         MIN_COMMITS_PER_DAY: 1
-        MAX_COMMITS_PER_DAY: 5
+        MAX_COMMITS_PER_DAY: 2
         INCLUDE_WEEKENDS: false  # Only weekdays
         INCLUDE_WEEKDAYS: true
         GIT_COMMIT_MESSAGE: "chore: automated contribution"
 
     - name: Verify backfill
       run: |
-        echo "Checking commits from the last 730 days..."
-        git log --oneline --since="730 days ago" | head -20
-        TOTAL_COMMITS=$(git log --oneline --since="730 days ago" --author="emmanuelcuyugan@gmail.com" | wc -l)
-        echo "Total commits created: $TOTAL_COMMITS"
-        echo "Backfill completed successfully!"
+        echo "=== Backfill Complete ==="
+        echo ""
+        echo "Total commits: $(git log --oneline --author='emmanuelcuyugan@gmail.com' | wc -l)"
+        echo ""
+        echo "Commits by year:"
+        echo "  2024: $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | grep '^2024-' | sort -u | wc -l) unique days"
+        echo "  2025: $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | grep '^2025-' | sort -u | wc -l) unique days"
+        echo "  2026: $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | grep '^2026-' | sort -u | wc -l) unique days"
+        echo ""
+        echo "Date range:"
+        echo "  First: $(git log --reverse --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | head -1)"
+        echo "  Last:  $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | head -1)"
