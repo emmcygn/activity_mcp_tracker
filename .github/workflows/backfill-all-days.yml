@@ -1,0 +1,63 @@
+# .github/workflows/backfill-all-days.yml
+# Backfill ALL days (including weekends): Jan 1, 2024 to Jan 8, 2026
+# 0-1 commits per day (some days will have no commits)
+# Run this AFTER the weekday-only backfill for sparse weekend coverage
+
+name: Backfill All Days (Weekends Included)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  backfill-all-days:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Calculate days since Jan 1, 2024
+      id: calculate
+      run: |
+        START_DATE="2024-01-01"
+        END_DATE="2026-01-08"
+
+        # Calculate days between start and end date
+        START_EPOCH=$(date -d "$START_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%d" "$START_DATE" +%s)
+        END_EPOCH=$(date -d "$END_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%d" "$END_DATE" +%s)
+        DAYS_DIFF=$(( ($END_EPOCH - $START_EPOCH) / 86400 ))
+
+        echo "Start date: $START_DATE"
+        echo "End date: $END_DATE"
+        echo "Days to backfill: $DAYS_DIFF"
+        echo "days=$DAYS_DIFF" >> $GITHUB_OUTPUT
+
+    - name: Backfill all days (0-1 commits, including weekends)
+      uses: bcanseco/github-contribution-graph-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_EMAIL: emmanuelcuyugan@gmail.com
+        MAX_DAYS: ${{ steps.calculate.outputs.days }}
+        MIN_COMMITS_PER_DAY: 0  # 0 commits = some days will be empty
+        MAX_COMMITS_PER_DAY: 1  # Maximum 1 commit
+        INCLUDE_WEEKENDS: true   # Include weekends
+        INCLUDE_WEEKDAYS: true   # Include weekdays
+        GIT_COMMIT_MESSAGE: "chore: automated contribution"
+
+    - name: Verify backfill
+      run: |
+        echo "=== All-Days Backfill Complete ==="
+        echo ""
+        echo "Total commits: $(git log --oneline --author='emmanuelcuyugan@gmail.com' | wc -l)"
+        echo ""
+        echo "Unique days with commits:"
+        echo "  2024: $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | grep '^2024-' | sort -u | wc -l) days"
+        echo "  2025: $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | grep '^2025-' | sort -u | wc -l) days"
+        echo "  2026: $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | grep '^2026-' | sort -u | wc -l) days"
+        echo ""
+        echo "Date range:"
+        echo "  First: $(git log --reverse --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | head -1)"
+        echo "  Last:  $(git log --pretty=format:'%ad' --date=short --author='emmanuelcuyugan@gmail.com' | head -1)"

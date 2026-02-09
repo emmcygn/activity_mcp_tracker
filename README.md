@@ -17,10 +17,26 @@ Automatically populate your GitHub contribution graph with commits using GitHub 
 
 ## What This Does
 
-This repository provides two automated workflows:
+This repository provides three workflows to populate your GitHub contribution graph:
 
-1. **One-Time Backfill** - Populates 2 years of historical commits (all weekdays with 1-5 commits per day)
-2. **Daily Automation** - Automatically creates 1-3 commits every weekday to maintain your contribution streak
+### Backfill Workflows (Manual, Run Once)
+
+1. **Backfill Weekdays Only** - Jan 1, 2024 to Feb 8, 2026
+   - Weekdays only (Mon-Fri)
+   - 1-2 commits per day
+   - Creates consistent weekday activity
+
+2. **Backfill All Days (Weekends Included)** - Jan 1, 2024 to Jan 8, 2026
+   - All 7 days (includes weekends)
+   - 0-1 commits per day (sparse, some days empty)
+   - Run AFTER weekday backfill for weekend coverage
+
+### Daily Automation (Automatic, Ongoing)
+
+3. **Daily Weekday Commits** - Runs automatically Mon-Fri
+   - Weekdays only
+   - 1-2 commits per day
+   - Maintains your streak going forward
 
 **Result:** A populated GitHub contribution graph showing consistent activity, even if your actual work happens elsewhere.
 
@@ -77,6 +93,12 @@ cd activity_tracker
 
 ### Step 4: Create Workflow Files
 
+**Option A - Copy from this repository (Easiest):**
+
+Clone or fork this repository to use the pre-configured workflows with proper settings.
+
+**Option B - Create manually:**
+
 Create the GitHub Actions workflow directory structure:
 
 ```bash
@@ -84,7 +106,12 @@ Create the GitHub Actions workflow directory structure:
 mkdir -p .github/workflows
 ```
 
-#### Create Backfill Workflow
+Then create three workflow files - see the complete files in this repository:
+- `.github/workflows/backfill-2-years.yml` - Weekday backfill
+- `.github/workflows/backfill-all-days.yml` - All-days backfill
+- `.github/workflows/daily-weekday-commits.yml` - Daily automation
+
+#### Example: Backfill Weekdays Workflow
 
 Create file `.github/workflows/backfill-2-years.yml`:
 
@@ -236,13 +263,22 @@ git push origin main
 
 If you see a message about workflows needing approval, click **"I understand my workflows, go ahead and enable them"**
 
-### Step 8: Run the Backfill
+### Step 8: Run the Backfill Workflows
 
-1. In the **Actions** tab, click **"Backfill 2 Years"**
+You should now see three workflows in the Actions tab. Run them in order:
+
+**First - Backfill Weekdays:**
+1. In the **Actions** tab, click **"Backfill Jan 2024 - Feb 2026"**
 2. Click the **"Run workflow"** dropdown button (on the right)
 3. Click the green **"Run workflow"** button
-4. Wait 2-5 minutes for it to complete
+4. Wait 3-5 minutes for it to complete
 5. You should see a green checkmark when done ✅
+
+**Second - Backfill Weekends (Optional):**
+1. Click **"Backfill All Days (Weekends Included)"**
+2. Click **"Run workflow"** → **"Run workflow"**
+3. Wait 3-5 minutes for completion ✅
+4. This adds sparse weekend commits on top of weekday commits
 
 ### Step 9: Verify Your Contribution Graph
 
@@ -256,39 +292,75 @@ If you see a message about workflows needing approval, click **"I understand my 
 
 ## How to Use
 
-### Running Workflows Manually
+### Recommended Setup Order
 
-**Backfill Workflow** (run once):
-1. Go to **Actions** → **"Backfill 2 Years"**
-2. Click **"Run workflow"**
+Run the workflows in this order for best results:
 
-**Daily Workflow** (test it):
-1. Go to **Actions** → **"Daily Weekday Commits"**
-2. Click **"Run workflow"**
+#### 1️⃣ First: Backfill Weekdays (Required)
+1. Go to **Actions** → **"Backfill Jan 2024 - Feb 2026"**
+2. Click **"Run workflow"** → **"Run workflow"**
+3. Wait 3-5 minutes for completion ✅
+4. **This fills all weekdays** from Jan 1, 2024 to Feb 8, 2026 with 1-2 commits each
 
-### Automated Daily Commits
+#### 2️⃣ Second: Backfill Weekends (Optional)
+1. Go to **Actions** → **"Backfill All Days (Weekends Included)"**
+2. Click **"Run workflow"** → **"Run workflow"**
+3. Wait 3-5 minutes for completion ✅
+4. **This adds sparse weekend coverage** (0-1 commits) from Jan 1, 2024 to Jan 8, 2026
+5. Some weekend days will remain empty for a natural-looking pattern
+
+> 💡 **Tip**: Running both creates a realistic pattern - solid weekday activity with occasional weekend commits
+
+#### 3️⃣ Ongoing: Daily Automation (Automatic)
 
 The daily workflow runs automatically:
 - **Schedule**: Monday-Friday at 9 AM UTC
-- **Action**: Creates 1-3 commits
+- **Action**: Creates 1-2 commits on weekdays
 - **Smart**: Skips if commits already exist for that day
+- **No action needed** - it runs on its own!
+
+You can also trigger it manually:
+1. Go to **Actions** → **"Daily Weekday Commits"**
+2. Click **"Run workflow"** → **"Run workflow"**
 
 ---
 
 ## Configuration Options
 
-### Adjusting Commit Frequency
+### Current Workflow Settings
 
-Edit the workflow files to customize:
+**Backfill Weekdays Only** (`.github/workflows/backfill-2-years.yml`):
+- Date range: Jan 1, 2024 to Feb 8, 2026
+- Days: Weekdays only (Mon-Fri)
+- Commits: 1-2 per day
+
+**Backfill All Days** (`.github/workflows/backfill-all-days.yml`):
+- Date range: Jan 1, 2024 to Jan 8, 2026
+- Days: All days (includes weekends)
+- Commits: 0-1 per day (sparse pattern)
+
+**Daily Automation** (`.github/workflows/daily-weekday-commits.yml`):
+- Schedule: Monday-Friday at 9 AM UTC
+- Commits: 1-2 per day
+- Weekdays only
+
+### Customizing Commit Frequency
+
+Edit the workflow files to customize commits per day:
 
 ```yaml
 MIN_COMMITS_PER_DAY: 1      # Minimum commits per day
-MAX_COMMITS_PER_DAY: 5      # Maximum commits per day
+MAX_COMMITS_PER_DAY: 2      # Maximum commits per day
 INCLUDE_WEEKENDS: false     # true = include weekends
 INCLUDE_WEEKDAYS: true      # false = skip weekdays
 ```
 
-### Changing Schedule
+**File locations:**
+- `backfill-2-years.yml` - Change 1-2 to your preferred range
+- `backfill-all-days.yml` - Change 0-1 (keep at 0 min for sparse pattern)
+- `daily-weekday-commits.yml` - Change 1-2 for daily automation
+
+### Changing Daily Schedule
 
 Modify the cron schedule in `daily-weekday-commits.yml`:
 
@@ -300,16 +372,21 @@ schedule:
 **Examples:**
 - `'0 12 * * 1-5'` - Weekdays at noon UTC
 - `'0 0 * * *'` - Every day at midnight UTC
-- `'0 9 * * 1-7'` - Every day at 9 AM UTC
+- `'0 9 * * 1-7'` - Every day (including weekends) at 9 AM UTC
 
-### Backfilling Different Time Periods
+### Adjusting Date Ranges
 
-Adjust `MAX_DAYS` in the backfill workflow:
+To backfill different time periods, edit the `START_DATE` in the workflows:
 
+**In `backfill-2-years.yml`:**
 ```yaml
-MAX_DAYS: 730   # 2 years
-MAX_DAYS: 365   # 1 year
-MAX_DAYS: 90    # 3 months
+START_DATE="2024-01-01"  # Change to your desired start date
+```
+
+**In `backfill-all-days.yml`:**
+```yaml
+START_DATE="2024-01-01"  # Start date
+END_DATE="2026-01-08"    # End date
 ```
 
 ---
