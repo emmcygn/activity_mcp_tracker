@@ -1,6 +1,4 @@
-# GitHub Contribution Graph Auto-Populator
-
-Track personal Github sync MCP server usage with activity/contribution metrics.
+# GitHub Track personal Github sync MCP server usage with activity/contribution metrics.
 ---
 
 ## What This Does
