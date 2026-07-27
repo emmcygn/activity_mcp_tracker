@@ -39,16 +39,20 @@ jobs:
 
     - name: Create daily commits (1-2)
       if: steps.check-commits.outputs.skip == 'false'
-      uses: bcanseco/github-contribution-graph-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GIT_EMAIL: emmanuelcuyugan@gmail.com
-        MAX_DAYS: 1  # Only today
-        MIN_COMMITS_PER_DAY: 1
-        MAX_COMMITS_PER_DAY: 2
-        INCLUDE_WEEKENDS: false
-        INCLUDE_WEEKDAYS: true
-        GIT_COMMIT_MESSAGE: "chore: daily contribution"
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        COMMIT_COUNT=$((RANDOM % 2 + 1))
+        echo "Creating $COMMIT_COUNT commit(s) for today"
+
+        for i in $(seq 1 "$COMMIT_COUNT"); do
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) daily contribution $i/$COMMIT_COUNT" >> .github/daily-commits.log
+          git add .github/daily-commits.log
+          git commit -m "chore: daily contribution ($i/$COMMIT_COUNT)"
+        done
+
+        git push
 
     - name: Verify today's commits
       if: steps.check-commits.outputs.skip == 'false'
